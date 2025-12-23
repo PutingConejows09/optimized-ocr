@@ -1,23 +1,10 @@
-# Web Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
-jinja2==3.1.2
-
-# Environment
-python-dotenv==1.0.0
-
-# Computer Vision & OCR
-opencv-python==4.8.1.78
-easyocr==1.7.1
-numpy==1.24.3
-
-# PyTorch (Required by EasyOCR - CPU version)
+easyocr==1.7.0
 torch==2.1.0
 torchvision==0.16.0
-
-# Image Processing
+opencv-python-headless==4.8.1.78
 Pillow==10.1.0
-
-# System monitoring (optional but recommended)
-psutil==5.9.6
+numpy==1.24.3
+jinja2==3.1.2
