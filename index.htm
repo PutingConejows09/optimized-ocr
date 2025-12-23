@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt OCR - Advanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background: #eef1ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-area.dragover {
+            background: #e0e7ff;
+            border-color: #4f46e5;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        /* Preprocessing Options */
+        .preprocessing-options {
+            background: #f0f4ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .preprocessing-options h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .option-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .checkbox-label:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label.checked {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .denoise-strength {
+            margin-top: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .denoise-strength label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .denoise-strength select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+            font-weight: 600;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .preview {
+            margin-top: 20px;
+        }
+        
+        .preview img {
+            max-width: 100px;
+            height: auto;
+            margin: 5px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+        
+        .progress {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .progress.active {
+            display: block;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .result.active {
+            display: block;
+        }
+        
+        .result h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .ocr-text {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 5px;
+        }
+        
+        .badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge.warning {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        .instructions {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .instructions h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            color: #78350f;
+        }
+        
+        .feature-info {
+            background: #e0e7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .feature-info h4 {
+            color: #3730a3;
+            margin-bottom: 10px;
+        }
+        
+        .feature-info ul {
+            margin-left: 20px;
+            color: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📎 Advanced Receipt OCR</h1>
+        <p class="subtitle">With Stitching, Cropping, Deskewing & Denoising</p>
+        
+        <div class="instructions">
+            <h4>📸 For Long Receipts:</h4>
+            <ul>
+                <li>Take 2-3 overlapping photos (20-30% overlap)</li>
+                <li>Upload all photos together</li>
+                <li>We'll automatically stitch and process them!</li>
+            </ul>
+        </div>
+        
+        <div class="feature-info">
+            <h4>🔧 Preprocessing Features:</h4>
+            <ul>
+                <li><strong>Auto-Crop:</strong> Removes borders and background</li>
+                <li><strong>Deskew:</strong> Straightens tilted receipts</li>
+                <li><strong>Denoise:</strong> Removes noise and artifacts</li>
+            </ul>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📤</div>
+            <p><strong>Click to upload</strong> or drag and drop</p>
+            <p style="color: #999; margin-top: 10px;">Support for multiple images (JPG, PNG)</p>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+        
+        <div class="preview" id="preview"></div>
+        
+        <!-- Preprocessing Options -->
+        <div class="preprocessing-options">
+            <h3>🔧 Preprocessing Options</h3>
+            
+            <div class="option-group">
+                <label class="checkbox-label" id="cropLabel">
+                    <input type="checkbox" id="autoCrop">
+                    <span>📐 Auto-Crop</span>
+                </label>
+                
+                <label class="checkbox-label" id="deskewLabel">
+                    <input type="checkbox" id="deskew">
+                    <span>📏 Deskew</span>
+                </label>
+                
+                <label class="checkbox-label" id="denoiseLabel">
+                    <input type="checkbox" id="denoise">
+                    <span>🧹 Denoise</span>
+                </label>
+            </div>
+            
+            <div class="denoise-strength" id="denoiseStrength" style="display: none;">
+                <label>Denoising Strength:</label>
+                <select id="denoiseLevel">
+                    <option value="light">Light (Faster)</option>
+                    <option value="medium" selected>Medium (Recommended)</option>
+                    <option value="strong">Strong (Slower)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="processBtn" disabled>Process Receipt</button>
+        
+        <div class="progress" id="progress">
+            <p id="progressText">Processing...</p>
+        </div>
+        
+        <div class="result" id="result">
+            <div id="processingInfo"></div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="wordCount">-</div>
+                    <div class="stat-label">Words</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="confidence">-</div>
+                    <div class="stat-label">Confidence</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="processingTime">-</div>
+                    <div class="stat-label">Time</div>
+                </div>
+            </div>
+            
+            <h3>📄 Extracted Text:</h3>
+            <div class="ocr-text" id="ocrText"></div>
+        </div>
+    </div>
+    
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const preview = document.getElementById('preview');
+        const processBtn = document.getElementById('processBtn');
+        const progress = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
+        const result = document.getElementById('result');
+        
+        // Preprocessing controls
+        const autoCrop = document.getElementById('autoCrop');
+        const deskew = document.getElementById('deskew');
+        const denoise = document.getElementById('denoise');
+        const denoiseLevel = document.getElementById('denoiseLevel');
+        const denoiseStrength = document.getElementById('denoiseStrength');
+        
+        // Checkbox label highlighting
+        const cropLabel = document.getElementById('cropLabel');
+        const deskewLabel = document.getElementById('deskewLabel');
+        const denoiseLabel = document.getElementById('denoiseLabel');
+        
+        let selectedFiles = [];
+        
+        // Checkbox change handlers
+        autoCrop.addEventListener('change', () => {
+            cropLabel.classList.toggle('checked', autoCrop.checked);
+        });
+        
+        deskew.addEventListener('change', () => {
+            deskewLabel.classList.toggle('checked', deskew.checked);
+        });
+        
+        denoise.addEventListener('change', () => {
+            denoiseLabel.classList.toggle('checked', denoise.checked);
+            denoiseStrength.style.display = denoise.checked ? 'block' : 'none';
+        });
+        
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            
+            if (selectedFiles.length === 0) {
+                processBtn.disabled = true;
+                return;
+            }
+            
+            // Show preview
+            preview.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            processBtn.disabled = false;
+            
+            // Update button text
+            let btnText = selectedFiles.length > 1 
+                ? `Process ${selectedFiles.length} Images` 
+                : 'Process Receipt';
+            
+            const enabledFeatures = [];
+            if (autoCrop.checked) enabledFeatures.push('Crop');
+            if (deskew.checked) enabledFeatures.push('Deskew');
+            if (denoise.checked) enabledFeatures.push('Denoise');
+            
+            if (enabledFeatures.length > 0) {
+                btnText += ` (${enabledFeatures.join(' + ')})`;
+            }
+            
+            processBtn.textContent = btnText;
+        }
+        
+        // Update button text when preprocessing options change
+        [autoCrop, deskew, denoise].forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (selectedFiles.length > 0) {
+                    handleFiles(selectedFiles);
+                }
+            });
+        });
+        
+        // Process button
+        processBtn.addEventListener('click', async () => {
+            const startTime = Date.now();
+            
+            progress.classList.add('active');
+            result.classList.remove('active');
+            processBtn.disabled = true;
+            
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            // Add preprocessing options
+            formData.append('auto_crop', autoCrop.checked);
+            formData.append('deskew', deskew.checked);
+            formData.append('denoise', denoise.checked);
+            formData.append('denoise_strength', denoiseLevel.value);
+            
+            try {
+                // Update progress text
+                const steps = [];
+                if (selectedFiles.length > 1) steps.push('Stitching');
+                if (autoCrop.checked) steps.push('Cropping');
+                if (deskew.checked) steps.push('Deskewing');
+                if (denoise.checked) steps.push('Denoising');
+                steps.push('OCR');
+                
+                progressText.textContent = `Processing: ${steps.join(' → ')}...`;
+                
+                const endpoint = selectedFiles.length > 1 ? '/upload_multiple' : '/upload';
+                const body = selectedFiles.length > 1 ? formData : (() => {
+                    const single = new FormData();
+                    single.append('file', selectedFiles[0]);
+                    single.append('auto_crop', autoCrop.checked);
+                    single.append('deskew', deskew.checked);
+                    single.append('denoise', denoise.checked);
+                    single.append('denoise_strength', denoiseLevel.value);
+                    return single;
+                })();
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: body
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+                
+                const data = await response.json();
+                const endTime = Date.now();
+                const processingTime = ((endTime - startTime) / 1000).toFixed(1);
+                
+                // Show results
+                displayResults(data, processingTime);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error(error);
+            } finally {
+                progress.classList.remove('active');
+                processBtn.disabled = false;
+            }
+        });
+        
+        function displayResults(data, processingTime) {
+            // Processing info
+            const processingInfo = document.getElementById('processingInfo');
+            let badges = [];
+            
+            // Stitching badge
+            if (data.stitched && data.stitching) {
+                badges.push(`<span class="badge success">✅ Stitched ${data.stitching.num_images} images</span>`);
+                badges.push(`<span class="badge info">Method: ${data.stitching.method}</span>`);
+            } else {
+                badges.push('<span class="badge info">Single image</span>');
+            }
+            
+            // Preprocessing badges
+            if (data.preprocessing && data.preprocessing.applied) {
+                data.preprocessing.steps.forEach(step => {
+                    if (step.includes('auto_crop')) {
+                        badges.push('<span class="badge success">📐 Cropped</span>');
+                    } else if (step.includes('deskew')) {
+                        const angle = data.preprocessing.rotation_angle;
+                        badges.push(`<span class="badge warning">📏 Deskewed ${angle.toFixed(2)}°</span>`);
+                    } else if (step.includes('denoise')) {
+                        badges.push('<span class="badge info">🧹 Denoised</span>');
+                    }
+                });
+            }
+            
+            processingInfo.innerHTML = badges.join('');
+            
+            // Stats
+            document.getElementById('wordCount').textContent = 
+                data.metrics?.num_valid_words || '-';
+            document.getElementById('confidence').textContent = 
+                data.metrics?.avg_confidence ? data.metrics.avg_confidence.toFixed(1) + '%' : '-';
+            document.getElementById('processingTime').textContent = 
+                processingTime + 's';
+            
+            // OCR text
+            document.getElementById('ocrText').textContent = data.ocr_text || 'No text detected';
+            
+            result.classList.add('active');
+        }
+    </script>
+</body>
+</html>
